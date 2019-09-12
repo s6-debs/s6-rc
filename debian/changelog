@@ -1,0 +1,5 @@
+s6-rc (0.5.0.0-1) stable; urgency=medium
+
+  * Initial release.
+
+ -- multiplexd <multi@in-addr.xyz>  Thu, 12 Sep 2019 21:36:58 +0100
