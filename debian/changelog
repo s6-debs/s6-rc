@@ -1,3 +1,10 @@
+s6-rc (0.5.0.0-2) stable; urgency=medium
+
+  * Bump revision to enable upgrade path from old s6-packaging
+    repository.
+
+ -- multiplexd <multi@in-addr.xyz>  Fri, 13 Sep 2019 17:47:20 +0100
+
 s6-rc (0.5.0.0-1) stable; urgency=medium
 
   * Initial release.
