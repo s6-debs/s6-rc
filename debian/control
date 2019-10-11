@@ -5,9 +5,9 @@ Maintainer: multiplexd <multi@in-addr.xyz>
 Uploaders: multiplexd <multi@in-addr.xyz>
 Build-Depends:
  debhelper (>= 10),
- libskarnet-dev (>= 2.8.0.0),
- libexecline-dev (>= 2.5.1.0),
- libs6-dev (>= 2.8.0.0),
+ libskarnet-dev (>= 2.9.0.0),
+ libexecline-dev (>= 2.5.2.0),
+ libs6-dev (>= 2.9.0.0),
  quilt
 Standards-Version: 3.9.8
 Homepage: https://skarnet.org/software/s6-rc/
@@ -44,9 +44,9 @@ Section: libdevel
 Depends:
  ${misc:Depends},
  libs6rc-0.5 (= ${binary:Version}),
- libskarnet-dev (>= 2.8.0.0),
- libexecline-dev (>= 2.5.1.0),
- libs6-dev (>= 2.8.0.0)
+ libskarnet-dev (>= 2.9.0.0),
+ libexecline-dev (>= 2.5.2.0),
+ libs6-dev (>= 2.9.0.0)
 Description: service manager for skarnet's s6 process supervisor (development files)
  s6-rc is a service manager for s6-based systems, i.e. a suite of programs
  that can start and stop services, both long-running daemons and one-time
