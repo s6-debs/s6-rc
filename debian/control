@@ -2,7 +2,6 @@ Source: s6-rc
 Section: admin
 Priority: optional
 Maintainer: multiplexd <multi@in-addr.xyz>
-Uploaders: multiplexd <multi@in-addr.xyz>
 Build-Depends:
  debhelper (>= 10),
  libskarnet-dev (>= 2.9.2.0),
@@ -47,7 +46,7 @@ Multi-Arch: same
 Section: libdevel
 Depends:
  ${misc:Depends},
- libs6rc-0.5 (= ${binary:Version}),
+ libs6rc0.5 (= ${binary:Version}),
  libskarnet-dev (>= 2.9.2.0),
  libexecline-dev (>= 2.6.0.0),
  libs6-dev (>= 2.9.1.0)
