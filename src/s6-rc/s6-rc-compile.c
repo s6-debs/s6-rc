@@ -116,6 +116,7 @@ struct bundle_s
   unsigned int name ; /* pos in data */
   unsigned int n ;
   unsigned int listindex ; /* pos in indices */
+  uint32_t annotation_flags ;
 } ;
 
 typedef struct before_s before_t, *before_t_ref ;
@@ -351,10 +352,30 @@ static uint32_t read_timeout (int dfd, char const *srcdir, char const *name, cha
   return timeout ;
 }
 
+static uint32_t read_flags (int dfd, char const *srcdir, char const *name)
+{
+  static char const *files[32] =
+  {
+    "flag-essential",
+    0
+  } ;
+  uint32_t flags = 0 ;
+  for (uint32_t i = 0 ; i < 32 ; i++)
+  {
+    if (!files[i]) break ;
+    if (access_at(dfd, files[i], F_OK, 0) < 0)
+    {
+      if (errno != ENOENT)
+        strerr_diefu6sys(111, "read ", srcdir, "/", name, "/", files[i]) ;
+    }
+    else flags |= i ;
+  }
+  return flags ;
+}
+
 static void add_common (before_t *be, int dfd, char const *srcdir, char const *name, common_t *common, servicetype_t svtype)
 {
   unsigned int dummy ;
-  common->annotation_flags = 0 ;
   add_name(be, srcdir, name, svtype, &dummy, &common->kname) ;
   if (!add_namelist(be, dfd, srcdir, name, "dependencies", &common->depindex, &common->ndeps))
   {
@@ -365,6 +386,7 @@ static void add_common (before_t *be, int dfd, char const *srcdir, char const *n
   }
   common->timeout[0] = read_timeout(dfd, srcdir, name, "timeout-down") ;
   common->timeout[1] = read_timeout(dfd, srcdir, name, "timeout-up") ;
+  common->annotation_flags = read_flags(dfd, srcdir, name) ;
 }
 
 static inline void add_oneshot (before_t *be, int dfd, char const *srcdir, char const *name)
@@ -469,6 +491,7 @@ static inline void add_bundle (before_t *be, int dfd, char const *srcdir, char c
   add_name(be, srcdir, name, SVTYPE_BUNDLE, &bundle.name, &dummy) ;
   if (!add_namelist(be, dfd, srcdir, name, "contents", &bundle.listindex, &bundle.n))
     strerr_diefu5sys(111, "open ", srcdir, "/", name, "/contents") ;
+  bundle.annotation_flags = read_flags(dfd, srcdir, name) ;
   if (!genalloc_append(bundle_t, &be->bundles, &bundle)) dienomem() ;
 }
 
@@ -668,6 +691,7 @@ static inline unsigned int resolve_bundles (bundle_t const *oldb, bundle_t *newb
   for (; i < nbundles ; i++)
   {
     newb[i].name = oldb[i].name ;
+    newb[i].annotation_flags = oldb[i].annotation_flags ;
     recinfo.source = i ;
     resolve_bundle_rec(&recinfo, i) ;
   }
@@ -876,6 +900,13 @@ static inline void flatlist_services (s6rc_db_t *db, unsigned char const *sarray
     else
       strerr_dief5x(1, "longrun pipeline collision", " reached from ", db->string + db->services[problem.left].name, " and involving ", db->string + db->services[problem.right].name) ;
   }
+}
+
+static inline void propagate_bundle_flags (s6rc_db_t *db, bundle_t const *bundles, unsigned int nbundles, uint32_t const *bdeps)
+{
+  for (unsigned int i = 0 ; i < nbundles ; i++)
+    for (unsigned int j = 0 ; j < bundles[i].n ; j++)
+      db->services[bdeps[bundles[i].listindex + j]].flags |= bundles[i].annotation_flags ;
 }
 
 
@@ -1496,6 +1527,7 @@ int main (int argc, char const *const *argv)
       uint32_t deps[db.ndeps << 1] ;
       db.deps = deps ;
       flatlist_services(&db, sarray) ;
+      propagate_bundle_flags(&db, bundles, nbundles, bdeps) ;
       write_compiled(compiled, &db, srcdirs, bundles, nbundles, bdeps, fdhuser, blocking) ;
     }
   }

@@ -104,6 +104,12 @@ definition directory <em>service</em> is expected to contain the following files
 <tt>oneshot</tt>, <tt>longrun</tt> or <tt>bundle</tt>, and a terminating
 newline. This file declares the type of service defined by the
 directory. </li>
+ <li> An optional regular file named <tt>flag-essential</tt>. The contents of this
+file are irrelevant, only its presence is tested. If this file exists, the service
+will be marked as essential, which means that a <tt>s6-rc -d change <em>foo</em></tt>
+command will not stop the service. Only a <tt>s6-rc -D change <em>foo</em></tt>
+command will. If the service is a bundle, the flag will be propagated to all its
+contents, i.e. all the services it represents will be marked as essential. </li>
 </ul>
 
 <h3> For bundles </h3>
@@ -113,7 +119,7 @@ directory. </li>
 of service names, one per line. Whitespace at the beginning of a line
 is ignored, but trailing whitespace is not. Lines starting with a <tt>#</tt>
 character are ignored. The file defines the services that will be
-represented by the bundle named <em>service</em>.
+represented by the bundle named <em>service</em>. </li>
 </ul>
 
 <p>
@@ -395,7 +401,7 @@ command. </li>
  The <tt>examples/source</tt> subdirectory of the s6-rc package contains a set
 of service definition directories, which is actually a working, valid set for a
 Linux system running
-<a href="http://busybox.net/">busybox</a> and the
+<a href="https://busybox.net/">busybox</a> and the
 <a href="//skarnet.org/software/">skarnet.org</a> packages; of course, only
 the service definition set has been kept, and private information has been
 removed, so it won't work out-of-the-box without the proper specific files,

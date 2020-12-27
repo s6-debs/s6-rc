@@ -26,7 +26,7 @@
 #include <s6-rc/config.h>
 #include <s6-rc/s6rc.h>
 
-#define USAGE "s6-rc [ -v verbosity ] [ -n dryrunthrottle ] [ -t timeout ] [ -l live ] [ -b ] [ -u | -d ] [ -p ] [ -a ] help|list|listall|diff|change [ servicenames... ]"
+#define USAGE "s6-rc [ -v verbosity ] [ -n dryrunthrottle ] [ -t timeout ] [ -l live ] [ -b ] [ -u | -d | -D ] [ -p ] [ -a ] help|list|listall|diff|change [ servicenames... ]"
 #define dieusage() strerr_dieusage(100, USAGE)
 
 typedef struct pidindex_s pidindex_t ;
@@ -46,7 +46,8 @@ static unsigned int n ;
 static unsigned char *state ;
 static unsigned int *pendingdeps ;
 static tain_t deadline ;
-static unsigned int lameduck = 0 ;
+static int lameduck = 0 ;
+static int forcestop = 0 ;
 static char dryrun[UINT_FMT] = "" ;
 
 static inline void announce (void)
@@ -258,8 +259,13 @@ static void examine (unsigned int i, int h)
     if ((state[i] & 1) == h)
     {
       if (verbosity >= 3)
-        strerr_warni4x("processing service ", name, ": already ", h ? "up" : "down") ;
+        strerr_warni4x("service ", name, ": already ", h ? "up" : "down") ;
       broadcast_success(i, h) ;
+    }
+    else if (!h && !forcestop && db->services[i].flags & S6RC_DB_FLAG_ESSENTIAL)
+    {
+      if (verbosity)
+        strerr_warnw3x("service ", name, " is marked as essential, not stopping it") ;
     }
     else
     {
@@ -269,7 +275,7 @@ static void examine (unsigned int i, int h)
         pidindex[npids++].i = i ;
         if (verbosity >= 2)
         {
-          strerr_warni4x("processing service ", name, ": ", h ? "starting" : "stopping") ;
+          strerr_warni4x("service ", name, ": ", h ? "starting" : "stopping") ;
         }
       }
       else
@@ -277,7 +283,7 @@ static void examine (unsigned int i, int h)
         if (verbosity)
           strerr_warnwu2sys("spawn subprocess for ", name) ;
         if (verbosity >= 2)
-          strerr_warni5x("processing service ", name, ": ", h ? "start" : "stop", " failed") ;
+          strerr_warni4x("service ", name, ": failed to ", h ? "start" : "stop") ;
       }
     }
   }
@@ -300,7 +306,7 @@ static inline void on_success (unsigned int i, int h)
   if (h) state[i] |= 1 ; else state[i] &= 254 ;
   announce() ;
   if (verbosity >= 2)
-    strerr_warni5x(dryrun[0] ? "simulation: " : "", "service ", db->string + db->services[i].name, h ? " started" : " stopped", " successfully") ;
+    strerr_warni5x(dryrun[0] ? "simulation: " : "", "service ", db->string + db->services[i].name, " successfully st", h ? "arted" : "opped") ;
   if (!lameduck) broadcast_success(i, h) ;
 }
 
@@ -450,7 +456,7 @@ static inline void print_help (void)
 "s6-rc [ -l live ] [ -a ] list [ servicenames... ]\n"
 "s6-rc [ -l live ] [ -a ] [ -u | -d ] listall [ servicenames... ]\n"
 "s6-rc [ -l live ] diff\n"
-"s6-rc [ -l live ] [ -a ] [ -u | -d ] [ -p ] [ -v verbosity ] [ -t timeout ] [ -n dryrunthrottle ] change [ servicenames... ]\n" ;
+"s6-rc [ -l live ] [ -a ] [ -u | -d | -D ] [ -p ] [ -v verbosity ] [ -t timeout ] [ -n dryrunthrottle ] change [ servicenames... ]\n" ;
   if (buffer_putsflush(buffer_1, help) < 0)
     strerr_diefu1sys(111, "write to stdout") ;
 }
@@ -465,7 +471,7 @@ int main (int argc, char const *const *argv)
     subgetopt_t l = SUBGETOPT_ZERO ;
     for (;;)
     {
-      int opt = subgetopt_r(argc, argv, "v:n:t:l:udpaXb", &l) ;
+      int opt = subgetopt_r(argc, argv, "v:n:t:l:uDdpaXb", &l) ;
       if (opt == -1) break ;
       switch (opt)
       {
@@ -480,6 +486,7 @@ int main (int argc, char const *const *argv)
         case 't' : if (!uint0_scan(l.arg, &t)) dieusage() ; break ;
         case 'l' : live = l.arg ; break ;
         case 'u' : up = 1 ; break ;
+        case 'D' : forcestop = 1 ;
         case 'd' : up = 0 ; break ;
         case 'p' : prune = 1 ; break ;
         case 'a' : selectlive = 1 ; break ;
