@@ -1085,9 +1085,9 @@ static inline void write_fdholder (char const *compiled, s6rc_db_t const *db, ch
   if (!stralloc_cats(&satmp,
     "#!" EXECLINE_SHEBANGPREFIX "execlineb -P\n"
     EXECLINE_EXTBINPREFIX "pipeline -dw --\n{\n  "
-    EXECLINE_EXTBINPREFIX "if -n --\n  {\n    "
-    EXECLINE_EXTBINPREFIX "forstdin -x 1 -- i\n    "
-    EXECLINE_EXTBINPREFIX "exit 1\n  }\n  "
+    EXECLINE_EXTBINPREFIX "if --\n  {\n    "
+    EXECLINE_EXTBINPREFIX "forstdin -x0 -- i\n      "
+    EXECLINE_EXTBINPREFIX "exit 0\n  }\n  "
     EXECLINE_EXTBINPREFIX "if -nt --\n  {\n    "
     EXECLINE_EXTBINPREFIX "redirfd -r 0 ./data/autofilled\n    "
     S6_EXTBINPREFIX "s6-ipcclient -l0 -- s\n    "
@@ -1300,10 +1300,6 @@ static inline void write_servicedirs (char const *compiled, s6rc_db_t const *db,
       cleanup(compiled) ;
       strerr_diefu4sys(111, "copy ", srcfn, " to ", dstfn) ;
     }
-
-    memcpy(srcfn + srcdirlen + len + 2, "nosetsid", 9) ;
-    memcpy(dstfn + clen + 14 + len, "nosetsid", 9) ;
-    filecopy_unsafe(srcfn, dstfn, 0644) ;
 
     memcpy(srcfn + srcdirlen + len + 2, "notification-fd", 16) ;
     memcpy(dstfn + clen + 14 + len, "notification-fd", 16) ;
